@@ -1,4 +1,3 @@
-
 "use strict";
 
 (function () {
@@ -22,16 +21,14 @@
             logger("Extension not configured yet.");
             return;
         }
-        
+
         const jiraIssueRegex = /([A-Z]{2,10}\-[0-9]+)+/g;
         var openInNewTab = storedSettings.extensionSettings.useNewTab ? "target=\"_blank\"" : "";
         var protocol = storedSettings.extensionSettings.useHttps ? "https://" : "http://";
         var jiraUrlToUse = protocol + storedSettings.extensionSettings.jiraUrl;
         logger("Jira URL: " + jiraUrlToUse);
 
-        // GitHub can change the contents of the page without reloading, so
-        // we need to periodically run this...
-        setInterval(function () { 
+        function changeLinks() {
             // Pull-Request listing page.
             var pullRequests = document.getElementsByClassName('js-issue-row');
             logger("Found " + pullRequests.length + " pull-request(s).");
@@ -48,7 +45,7 @@
                         pr.innerHTML = pr.innerHTML.replace(jiraIssueRegex,
                             "<a class=\""+ jiraLinkClass + "\" " + openInNewTab + " href=\"" + jiraUrlToUse + "/browse/$&\">$&</a>\
                             <a href=\"" + originalPrLinkObj.getAttribute('href') + "\" class=\"" + originalPrLinkObj.className +"\">");
-                        
+
                         // Fix up the nested link elements caused by the above replace.
                         var newPrLinks = pr.getElementsByClassName('js-navigation-open');
                         if (newPrLinks == 2) {
@@ -68,7 +65,7 @@
                         "<a " + openInNewTab + " href=\"" + jiraUrlToUse + "/browse/$&\">$&</a>");
                 }
             }
-            
+
             // Commits
             var commitListing = document.getElementsByClassName('commit-title');
             logger("Found " + commitListing.length + " commit(s).");
@@ -114,7 +111,11 @@
                     }
                 }
             }
-        }, 2000);
+        }
+        // GitHub can change the contents of the page without reloading, so
+        // we need to periodically run this...
+        setInterval(changeLinks, 2000);
+        changeLinks();
     }
 
     function init() {
